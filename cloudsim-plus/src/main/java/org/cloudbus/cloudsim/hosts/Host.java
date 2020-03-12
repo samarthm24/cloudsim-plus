@@ -663,4 +663,12 @@ public interface Host extends Machine, Comparable<Host> {
      * @return the list of migratable VMs
      */
     List<Vm> getMigratableVms();
+    
+    long getRackId();
+    
+    void setRackId(long id);
+    
+    long getIsleId();
+    
+    void setIsleId(long id);
 }

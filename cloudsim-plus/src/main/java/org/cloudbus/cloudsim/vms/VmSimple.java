@@ -59,6 +59,8 @@ public class VmSimple extends CustomerEntityAbstract implements Vm {
 
     /** @see #getProcessor() */
     private final Processor processor;
+    
+    private long groupId;
 
     /** @see #getVmm() */
     private String vmm;
@@ -203,7 +205,7 @@ public class VmSimple extends CustomerEntityAbstract implements Vm {
      * @see #setDefaultBwCapacity(long)
      * @see #setDefaultStorageCapacity(long)
      */
-    public VmSimple(final long id, final long mipsCapacity, final long numberOfPes) {
+    public VmSimple(final long id, final long mipsCapacity, final long numberOfPes ) {
         this.resources = new ArrayList<>(4);
         setInMigration(false);
         setHost(Host.NULL);
@@ -213,7 +215,7 @@ public class VmSimple extends CustomerEntityAbstract implements Vm {
         this.startTime = -1;
         this.stopTime = -1;
         this.lastBusyTime = Double.MAX_VALUE;
-
+        
         setId(id);
         setBroker(DatacenterBroker.NULL);
         setMips(mipsCapacity);
@@ -300,6 +302,17 @@ public class VmSimple extends CustomerEntityAbstract implements Vm {
     public long getExpectedFreePesNumber() {
         return expectedFreePesNumber;
     }
+    
+    @Override
+    public long getGroupId() {
+        return groupId;
+    }
+    
+    @Override
+    public void setGroupId(long id) {
+        this.groupId = id;
+    }
+
 
     /**
      * Adds a given number of expected free PEs to the total number of expected free PEs.

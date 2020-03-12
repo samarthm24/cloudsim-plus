@@ -27,6 +27,7 @@ import org.cloudbus.cloudsim.hosts.Host;
 import org.cloudbus.cloudsim.vms.Vm;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -57,13 +58,20 @@ public class VmAllocationPolicyBestFit extends VmAllocationPolicyAbstract {
     protected Optional<Host> defaultFindHostForVm(final Vm vm) {
         /* Since it's being used the min operation, the active comparator must be reversed so that
          * we get active hosts with minimum number of free PEs. */
+    	System.out.println("called");
         final Comparator<Host> activeComparator = Comparator.comparing(Host::isActive).reversed();
         final Comparator<Host> comparator = activeComparator.thenComparingLong(Host::getFreePesNumber);
-
         final Stream<Host> stream = isParallelHostSearchEnabled() ? getHostList().stream().parallel() : getHostList().stream();
-        return stream
-                .filter(host -> host.isSuitableForVm(vm))
-                .min(comparator);
+        Optional<Host> temp = stream.filter(host -> host.isSuitableForVm(vm)).min(comparator);
+//        stream.forEach(p -> System.out.println(p));
+        final List<Host> hosts=getHostList();
+        System.out.println("current MIPS:"+Double.toString(vm.getCurrentRequestedMaxMips())+" current RAM:"+Double.toString(vm.getCurrentRequestedRam()));
+        System.out.println("Hosts considered are for MBFD are:");
+        for(int i=0;i<hosts.size();i++){
+            System.out.println(hosts.get(i)+" number of free PE's are "+Integer.toString(hosts.get(i).getFreePesNumber())+"  available MIPS are : "+hosts.get(i).getAvailableMips());
+        } 
+        System.out.println("Host chosen by algorithm is "+temp+" for "+vm);
+        return temp;
     }
 
 }

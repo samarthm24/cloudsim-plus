@@ -76,7 +76,9 @@ public class VmAllocationPolicyMigrationInterQuartileRange extends VmAllocationP
     public double computeHostUtilizationMeasure(final Host host) throws IllegalStateException {
         final double[] cpuUsageArray = getHostCpuUsageArray(host);
         if (MathUtil.countNonZeroBeginning(cpuUsageArray) >= MIN_HISTORY_ENTRIES_FOR_IRQ) {
-            return MathUtil.iqr(cpuUsageArray);
+            double temp = MathUtil.iqr(cpuUsageArray);
+            System.out.println("host : "+host+" IQR in action : "+Double.toString(temp));
+        	return temp;
         }
 
         throw new IllegalStateException("There is not enough Host history to compute Host utilization IRQ");

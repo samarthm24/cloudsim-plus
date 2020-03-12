@@ -8,6 +8,7 @@ package org.cloudbus.cloudsim.datacenters;
 
 import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicy;
 import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicySimple;
+import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicyBestFit;
 import org.cloudbus.cloudsim.cloudlets.Cloudlet;
 import org.cloudbus.cloudsim.core.CloudSimEntity;
 import org.cloudbus.cloudsim.core.CloudSimTags;
@@ -95,7 +96,7 @@ public class DatacenterSimple extends CloudSimEntity implements Datacenter {
      * @see #DatacenterSimple(Simulation, List, VmAllocationPolicy, DatacenterStorage)
      */
     public DatacenterSimple(final Simulation simulation, final List<? extends Host> hostList) {
-        this(simulation, hostList, new VmAllocationPolicySimple(), new DatacenterStorage());
+        this(simulation, hostList, new VmAllocationPolicyBestFit(), new DatacenterStorage());
     }
 
     /**
@@ -113,6 +114,15 @@ public class DatacenterSimple extends CloudSimEntity implements Datacenter {
     {
         this(simulation, hostList, vmAllocationPolicy, new DatacenterStorage());
     }
+    
+    public DatacenterSimple(
+            final Simulation simulation,
+            final List<? extends Host> hostList,
+            final VmAllocationPolicy vmAllocationPolicy,
+            final long rackCount, final long isleCount)
+        {
+            this(simulation, hostList, vmAllocationPolicy, new DatacenterStorage(),rackCount,isleCount);
+        }
 
     /**
      * Creates a Datacenter with an empty {@link #getDatacenterStorage() storage}
@@ -178,11 +188,41 @@ public class DatacenterSimple extends CloudSimEntity implements Datacenter {
 
         setVmAllocationPolicy(vmAllocationPolicy);
     }
+    
+    
+    public DatacenterSimple(
+            final Simulation simulation,
+            final List<? extends Host> hostList,
+            final VmAllocationPolicy vmAllocationPolicy,
+            final DatacenterStorage storage,
+            final long rackCount, final long isleCount)
+        {
+            super(simulation);
+            setHostList(hostList,rackCount,isleCount);
+            this.powerSupply = DatacenterPowerSupply.NULL;
+
+            setLastProcessTime(0.0);
+            setSchedulingInterval(0);
+            setDatacenterStorage(storage);
+
+            this.onHostAvailableListeners = new ArrayList<>();
+            this.characteristics = new DatacenterCharacteristicsSimple(this);
+            this.bandwidthPercentForMigration = DEF_BW_PERCENT_FOR_MIGRATION;
+            this.migrationsEnabled = true;
+
+            setVmAllocationPolicy(vmAllocationPolicy);
+        }
 
     private void setHostList(final List<? extends Host> hostList) {
         this.hostList = requireNonNull(hostList);
         setupHosts();
     }
+    
+    private void setHostList(final List<? extends Host> hostList,final long rackCount,final long isleCount) {
+        this.hostList = requireNonNull(hostList);
+        setupHosts(rackCount,isleCount);
+    }
+
 
     private void setupHosts() {
         for (final Host host : hostList) {
@@ -191,6 +231,21 @@ public class DatacenterSimple extends CloudSimEntity implements Datacenter {
         }
 
         Simulation.setIdForEntitiesWithoutOne(this.hostList);
+    }
+
+    private void setupHosts(long rackCount, long isleCount) {
+        for (final Host host : hostList) {
+            host.setDatacenter(this);
+            host.setSimulation(getSimulation());
+        }
+
+        Simulation.setIdForEntitiesWithoutOne(this.hostList);
+        long n = hostList.size();
+        for (int i = 0; i < n; i++) {
+            Host host = hostList.get(i);
+            host.setRackId(i/(n/rackCount));
+            host.setIsleId(i/(n/isleCount));
+        }
     }
 
     @Override
@@ -769,14 +824,18 @@ public class DatacenterSimple extends CloudSimEntity implements Datacenter {
         for (final Map.Entry<Vm, Host> entry : migrationMap.entrySet()) {
             requestVmMigration(entry.getKey(), entry.getValue());
         }
+        
     }
 
     @Override
     public void requestVmMigration(final Vm sourceVm, final Host targetHost) {
         final String currentTime = getSimulation().clockStr();
         final Host sourceHost = sourceVm.getHost();
-
+        
         final double delay = timeToMigrateVm(sourceVm, targetHost);
+        System.out.println("During Migartion of VM "+sourceVm +"current MIPS of VM:" + Double.toString(sourceVm.getCurrentRequestedMaxMips())+" current RAM of VM:"+Double.toString(sourceVm.getCurrentRequestedRam()));
+        System.out.println("During Migartion "+sourceHost+" number of free PE's are "+Integer.toString(sourceHost.getFreePesNumber())+"  available MIPS are : "+sourceHost.getAvailableMips());
+        System.out.println("During Migartion "+targetHost+" number of free PE's are "+Integer.toString(targetHost.getFreePesNumber())+"  available MIPS are : "+targetHost.getAvailableMips());
         final String msg1 =
             sourceHost == Host.NULL ?
                 String.format("%s to %s", sourceVm, targetHost) :

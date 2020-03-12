@@ -23,6 +23,7 @@ import org.cloudbus.cloudsim.vms.UtilizationHistory;
 import org.cloudbus.cloudsim.vms.Vm;
 import org.cloudbus.cloudsim.vms.VmGroup;
 import org.cloudbus.cloudsim.vms.VmStateHistoryEntry;
+import org.cloudbus.cloudsim.hosts.HostSimple;
 import org.cloudsimplus.listeners.EventListener;
 import org.cloudsimplus.listeners.HostUpdatesVmsProcessingEventInfo;
 import org.slf4j.Logger;
@@ -67,6 +68,10 @@ public class HostSimple implements Host {
 
     /** @see #getId() */
     private long id;
+    
+    private long rackId;
+    
+    private long isleId;
 
     /** @see #isFailed() */
     private boolean failed;
@@ -665,6 +670,26 @@ public class HostSimple implements Host {
     @Override
     public final void setId(long id) {
         this.id = id;
+    }
+    
+    @Override
+    public long getRackId() {
+        return rackId;
+    }
+
+    @Override
+    public final void setRackId(long id) {
+        this.rackId = id;
+    }
+
+    @Override
+    public long getIsleId() {
+        return isleId;
+    }
+
+    @Override
+    public final void setIsleId(long id) {
+        this.isleId = id;
     }
 
     @Override

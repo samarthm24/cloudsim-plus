@@ -2,10 +2,13 @@ package org.cloudbus.cloudsim.allocationpolicies;
 
 import org.cloudbus.cloudsim.hosts.Host;
 import org.cloudbus.cloudsim.vms.Vm;
-
+import java.util.Random;
 import java.util.List;
 import java.util.Optional;
-
+import java.io.*; 
+import java.lang.*;
+import org.cloudbus.cloudsim.brokers.DatacenterBroker;
+import org.cloudbus.cloudsim.brokers.DatacenterBrokerSimple;
 /**
  * A <b>Round-Robin VM allocation policy</b>
  * which finds the next Host having suitable resources to place a given VM
@@ -34,12 +37,22 @@ public class VmAllocationPolicyRoundRobin extends VmAllocationPolicyAbstract imp
      * The index of the last host used to place a VM.
      */
     private int lastHostIndex;
+    private DatacenterBroker broker;
+    private List<? extends Vm> vmList;
+    
+    public VmAllocationPolicyRoundRobin(DatacenterBroker broker,List<? extends Vm> list) {
+    	this.broker = broker;
+    	this.vmList = list;
+    }
 
     @Override
     protected Optional<Host> defaultFindHostForVm(final Vm vm) {
         final List<Host> hostList = getHostList();
         /* The for loop just defines the maximum number of Hosts to try.
          * When a suitable Host is found, the method returns immediately. */
+        for(int i = 0; i < vmList.size();i++) {
+        	
+        }
         final int maxTries = hostList.size();
         for (int i = 0; i < maxTries; i++) {
             final Host host = hostList.get(lastHostIndex);

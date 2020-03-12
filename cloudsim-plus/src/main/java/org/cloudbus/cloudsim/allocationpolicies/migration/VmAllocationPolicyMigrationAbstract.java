@@ -142,12 +142,12 @@ public abstract class VmAllocationPolicyMigrationAbstract extends VmAllocationPo
 
         while (true) {
             if (numberOfHosts == ignoredSourceHosts.size()) {
-                break;
+                return;
             }
 
             final Host underloadedHost = getUnderloadedHost(ignoredSourceHosts);
             if (underloadedHost == Host.NULL) {
-                break;
+                return;
             }
 
             LOGGER.info("{}: VmAllocationPolicy: Underloaded hosts: {}", getDatacenter().getSimulation().clockStr(), underloadedHost);
@@ -267,6 +267,7 @@ public abstract class VmAllocationPolicyMigrationAbstract extends VmAllocationPo
      * @return true if the Host is overloaded, false otherwise
      */
     private boolean isHostOverloaded(final Host host, final double cpuUsagePercent){
+//    	System.out.println("checking for overutilization "+host+" current utilization "+Double.toString(cpuUsagePercent)+" under threshold "+Double.toString(getOverUtilizationThreshold(host)));
         return cpuUsagePercent > getOverUtilizationThreshold(host);
     }
 
@@ -278,6 +279,7 @@ public abstract class VmAllocationPolicyMigrationAbstract extends VmAllocationPo
      */
     @Override
     public boolean isHostUnderloaded(final Host host) {
+//    	System.out.println("checking for underutilization "+host+" current utilization "+Double.toString(getHostCpuPercentRequested(host))+" under threshold "+Double.toString(getUnderUtilizationThreshold()));
         return getHostCpuPercentRequested(host) < getUnderUtilizationThreshold();
     }
 
@@ -347,7 +349,13 @@ public abstract class VmAllocationPolicyMigrationAbstract extends VmAllocationPo
     protected Optional<Host> findHostForVmInternal(final Vm vm, final Stream<Host> hostStream){
         final Comparator<Host> hostPowerConsumptionComparator =
             comparingDouble(host -> getPowerDifferenceAfterAllocation(host, vm));
-
+//        final List<Host> hosts=getHostList();
+//        System.out.println("current MIPS:"+Double.toString(vm.getCurrentRequestedMaxMips())+" current RAM:"+Double.toString(vm.getCurrentRequestedRam()));
+//        System.out.println("Hosts considered are for MBFD are:");
+//        for(int i=0;i<hosts.size();i++){
+//            System.out.println(hosts.get(i)+" number of free PE's are "+Integer.toString(hosts.get(i).getFreePesNumber())+"  available MIPS are : "+hosts.get(i).getAvailableMips());
+//            System.out.println("power difference after allocation "+Double.toString(getPowerDifferenceAfterAllocation(hosts.get(i), vm)));
+//        } 
         return additionalHostFilters(vm, hostStream).min(hostPowerConsumptionComparator);
     }
 

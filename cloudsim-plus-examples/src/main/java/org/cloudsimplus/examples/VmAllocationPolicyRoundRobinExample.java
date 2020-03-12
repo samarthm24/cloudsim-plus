@@ -24,6 +24,8 @@
 package org.cloudsimplus.examples;
 
 import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicyRoundRobin;
+import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicyBestFit;
+import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicyGravity;
 import org.cloudbus.cloudsim.brokers.DatacenterBroker;
 import org.cloudbus.cloudsim.brokers.DatacenterBrokerSimple;
 import org.cloudbus.cloudsim.cloudlets.Cloudlet;
@@ -43,7 +45,7 @@ import org.cloudsimplus.builders.tables.CloudletsTableBuilder;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-
+import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicyRoundRobin;
 /**
  * A example that show the usage of the {@link VmAllocationPolicyRoundRobin},
  * that cyclically places VMs into Hosts. This way, it places a VM into a Host
@@ -111,7 +113,7 @@ public class VmAllocationPolicyRoundRobinExample {
             hostList.add(host);
         }
 
-        return new DatacenterSimple(simulation, hostList, new VmAllocationPolicyRoundRobin());
+        return new DatacenterSimple(simulation, hostList, new VmAllocationPolicyRoundRobin(broker0));
     }
 
     private Host createHost() {
