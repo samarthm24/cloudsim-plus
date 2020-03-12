@@ -101,31 +101,32 @@ import static org.cloudbus.cloudsim.utilizationmodels.UtilizationModel.Unit;
  *       Host specified in the trace file.
  */
 public class sam_gt {
-    private static final String TRACE_FILENAME = "workload/google-traces/task-events-sample-1.csv";
-
+    //private static final String TRACE_FILENAME = "workload/google-traces/task-events-sample-1.csv";
+    private static final String TRACE_FILENAME = "D:\\traces\\clusterdata-2011-2\\task_events\\blah.csv";
+    
     private static final int SCHEDULING_INTERVAL = 300;
 
     private static final int CLOUDLETS = 1;
     private static final int CLOUDLET_PES = 2;
     //private static final int CLOUDLET_LENGTH = 100000000;
 
-    private static final String TRACE_FILE = "workload/planetlab/20110303/75-130-96-12_static_oxfr_ma_charter_com_irisaple_wup";
+    //private static final String TRACE_FILE = "workload/planetlab/20110303/75-130-96-12_static_oxfr_ma_charter_com_irisaple_wup";
    
     private static final int HOSTS = 800;
-    private static final int VMS = 1000;
+    private static final int VMS = 4;
 
-    private static final int    HOST_MIPS = 1860; //for each PE
-    private static final int    HOST_INITIAL_PES = 2;
-    private static final long   HOST_RAM = 160000; //host memory (MB)
-    private static final long   HOST_STORAGE = 160000; //host storage
-    private static final long   HOST_BW = 1024L; //Mb/s
+    private static final int    HOST_MIPS = 18600000; //for each PE
+    private static final int    HOST_INITIAL_PES = 2000;
+    private static final long   HOST_RAM = 1600000000; //host memory (MB)
+    private static final long   HOST_STORAGE = 1600000000; //host storage
+    private static final long   HOST_BW = 1024000L; //Mb/s
     private static final double HOST_UTILIZATION_THRESHOLD_FOR_VM_MIGRATION = 0.7;
    
-    private static final int    HOST_MIPS_2 = 2660; //for each PE
-    private static final int    HOST_INITIAL_PES_2 = 2;
-    private static final long   HOST_RAM_2 = 32000; //host memory (MB)
-    private static final long   HOST_STORAGE_2 = 320000; //host storage
-    private static final long   HOST_BW_2 = 1024L; //Mb/s
+    private static final int    HOST_MIPS_2 = 26600000; //for each PE
+    private static final int    HOST_INITIAL_PES_2 = 2000;
+    private static final long   HOST_RAM_2 = 32000000; //host memory (MB)
+    private static final long   HOST_STORAGE_2 = 320000000; //host storage
+    private static final long   HOST_BW_2 = 10240000L; //Mb/s
  
     private static final int    VM_MIPS =2500 ; //for each PE
     private static final long   VM_SIZE = 1000; //image size (MB)
@@ -179,8 +180,9 @@ public class sam_gt {
 
         simulation = new CloudSim();
         datacenter = createDatacenter();
-
+        
         createCloudletsAndBrokersFromTraceFile();
+        System.out.println(brokers.size());
         brokers.forEach(broker -> createAndSubmitVms(broker));
         readTaskUsageTraceFile();
 
@@ -339,14 +341,7 @@ public class sam_gt {
         List<Vm> list = new ArrayList<>(VMS);
         for(int i = 0; i < VMS; i+=4){
             Vm vm = createVm(broker, VM_PES);
-            list.add(vm);
-            Vm vm2 = createVm2(broker, VM_PES_2);
-            list.add(vm2);
-            Vm vm3 = createVm3(broker, VM_PES_3);
-            list.add(vm3);
-            Vm vm4 = createVm4(broker, VM_PES_4);
-            list.add(vm4);
-           
+            list.add(vm);  
         }
 
         vmList.addAll(list);
