@@ -71,7 +71,7 @@ import java.util.Optional;
  * @author Manoel Campos da Silva Filho
  * @since CloudSim Plus 4.0.5
  */
-public class RandomVmAllocationPolicyExample {
+public class example {
     private static final int HOSTS = 10;
     private static final int HOST_PES = 8;
 
@@ -98,7 +98,7 @@ public class RandomVmAllocationPolicyExample {
         new RandomVmAllocationPolicyExample();
     }
 
-    private RandomVmAllocationPolicyExample() {
+    private example() {
         final double startSecs = TimeUtil.currentTimeSecs();
         //Enables just some level of log messages.
         Log.setLevel(ch.qos.logback.classic.Level.WARN);
@@ -203,7 +203,7 @@ public class RandomVmAllocationPolicyExample {
             list.add(vm);
         }
 
-        return list;
+        return list; 
     }
 
     /**
