@@ -1,37 +1,15 @@
 package org.cloudbus.cloudsim.allocationpolicies;
 
-import java.io.*; 
-import java.lang.*; 
-import org.cloudbus.cloudsim.allocationpolicies.migration.VmAllocationPolicyMigrationMedianAbsoluteDeviation;
-import org.cloudbus.cloudsim.allocationpolicies.migration.VmAllocationPolicyMigrationStaticThreshold;
-import org.cloudbus.cloudsim.brokers.DatacenterBroker;
-import org.cloudbus.cloudsim.brokers.DatacenterBrokerSimple;
-import org.cloudbus.cloudsim.cloudlets.Cloudlet;
-import org.cloudbus.cloudsim.cloudlets.CloudletSimple;
-import org.cloudbus.cloudsim.core.CloudSim;
-import org.cloudbus.cloudsim.datacenters.Datacenter;
-import org.cloudbus.cloudsim.datacenters.DatacenterSimple;
-import org.cloudbus.cloudsim.hosts.Host;
-import org.cloudbus.cloudsim.hosts.HostSimple;
-import org.cloudbus.cloudsim.hosts.HostStateHistoryEntry;
-import org.cloudbus.cloudsim.power.models.PowerModelLinear;
-import org.cloudbus.cloudsim.provisioners.PeProvisionerSimple;
-import org.cloudbus.cloudsim.provisioners.ResourceProvisionerSimple;
-import org.cloudbus.cloudsim.resources.Pe;
-import org.cloudbus.cloudsim.resources.PeSimple;
-import org.cloudbus.cloudsim.schedulers.cloudlet.CloudletSchedulerTimeShared;
-import org.cloudbus.cloudsim.schedulers.vm.VmSchedulerTimeShared;
-import org.cloudbus.cloudsim.selectionpolicies.VmSelectionPolicyMinimumUtilization;
-import org.cloudbus.cloudsim.utilizationmodels.UtilizationModel;
-import org.cloudbus.cloudsim.utilizationmodels.UtilizationModelDynamic;
-import org.cloudbus.cloudsim.utilizationmodels.UtilizationModelFull;
-import org.cloudbus.cloudsim.utilizationmodels.UtilizationModelPlanetLab;
-import org.cloudbus.cloudsim.vms.Vm;
-import org.cloudbus.cloudsim.vms.VmSimple;
-import org.cloudsimplus.builders.tables.CloudletsTableBuilder;
-import org.cloudbus.cloudsim.distributions.ContinuousDistribution;
-import java.util.Random;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.List;
 
+import org.cloudbus.cloudsim.hosts.Host;
+import org.cloudbus.cloudsim.vms.Vm;
+
+import java.util.Random;
 
 
 public class VmAllocationPolicyGravity extends VmAllocationPolicyAbstract implements VmAllocationPolicy {
@@ -42,11 +20,11 @@ public class VmAllocationPolicyGravity extends VmAllocationPolicyAbstract implem
 	
 	private final String failureZone;
 	
-	private Map<long,List<long>> savedAllocation;
+	private Map<Long,List<Long>> savedAllocation;
 	
-	private final maxNeighborLookup;
+	private final long maxNeighborLookup;
 	
-	private final maxIterations;
+	private final long maxIterations;
     /**
      * Instantiates a VmAllocationPolicyRandom.
      *
@@ -62,7 +40,7 @@ public class VmAllocationPolicyGravity extends VmAllocationPolicyAbstract implem
         super();
         //this.random = Objects.requireNonNull(random);
         this.failureZone = failureZone;
-        this.savedAllocation = new HashMap<>();
+        this.savedAllocation = new HashMap<Long,List<Long>>();
         this.maxIterations = maxIterations;
         this.maxNeighborLookup = maxNeighborLookup;
     }
@@ -76,13 +54,17 @@ public class VmAllocationPolicyGravity extends VmAllocationPolicyAbstract implem
     		return host.getIsleId();
     }
     
-    private List<Host> getHostListExcluding(List<long> idList){
-    	List<Host> hostList = getHostList();
-    	List<Integer> indeces = new ArrayList<Integer>();
+    private List<Host> getHostListExcluding(List<Long> idList){
+    	List<Host> hostListDatacenter = (List<Host>) getHostList();
+    	List<Host> hostList = new ArrayList<Host>();
+    	for(Host host: hostListDatacenter) {
+    		hostList.add(host);
+    	}
+    	ArrayList<Integer> indeces = new ArrayList<Integer>();
     	for(int i=0;i<hostList.size();i++) {
     		Host host = hostList.get(i);
     		for(int j=0;j<idList.size();j++) {
-    			long id = idList.get(i);
+    			long id = idList.get(j);
     			long hostId = getCorrespondingHostId(host);
     			if(hostId == id) {
     				indeces.add(i);
@@ -92,30 +74,115 @@ public class VmAllocationPolicyGravity extends VmAllocationPolicyAbstract implem
     	}
     	for(int k=0;k<indeces.size();k++) {
     		int hostIndex = indeces.get(k);
-    		hostList.remove(hostindex);
+    		hostList.remove(hostIndex);
     	}
     	return hostList;
-    } 
+    }
+    
+    private double getTotalPowerDatacenter(Host currentHost,Vm vm) {
+    	List<Host> hostList = (List<Host>) getHostList();
+    	double totalPower = 0.0;
+    	for(int i=0;i<hostList.size();i++) {
+    		Host host = hostList.get(i);
+    		if(host == currentHost) {
+    			totalPower += getPowerAfterAllocation(currentHost,vm);
+     		}
+    		else {
+    			totalPower += host.getPowerModel().getPower(host.getCpuPercentUtilization());
+    		}
+    	}
+    	return totalPower;
+    }
+    
+    
+	protected double getPowerAfterAllocation(final Host host, final Vm vm) {
+	    try {
+	        return host.getPowerModel().getPower(getMaxUtilizationAfterAllocation(host, vm));
+	    } catch (IllegalArgumentException e) {
+	//        LOGGER.error("Power consumption for {} could not be determined: {}", host, e.getMessage());
+	    }
+	
+	    return 0;
+	}
+
+	protected double getMaxUtilizationAfterAllocation(final Host host, final Vm vm) {
+	    final double requestedTotalMips = vm.getCurrentRequestedTotalMips();
+	    final double hostUtilizationMips = host.getCpuMipsUtilization();
+	    final double hostPotentialMipsUse = hostUtilizationMips + requestedTotalMips;
+	    return hostPotentialMipsUse / host.getTotalMipsCapacity();
+	}
+	
+	public static int randInt(int min, int max) {
+	    // NOTE: This will (intentionally) not run as written so that folks
+	    // copy-pasting have to think about how to initialize their
+	    // Random instance.  Initialization of the Random instance is outside
+	    // the main scope of the question, but some decent options are to have
+	    // a field that is initialized once and then re-used as needed or to
+	    // use ThreadLocalRandom (if using at least Java 1.7).
+	    // 
+	    // In particular, do NOT do 'Random rand = new Random()' here or you
+	    // will get not very good / not very random results.
+	    Random rand = new Random();
+
+	    // nextInt is normally exclusive of the top value,
+	    // so add 1 to make it inclusive
+	    int randomNum = rand.nextInt((max - min) + 1) + min;
+	    return randomNum;
+	}
+
+
 
     @Override
     protected Optional<Host> defaultFindHostForVm(final Vm vm) {
-        final List<Host> hostList = getHostList();
-        /* The for loop just defines the maximum number of Hosts to try.
-         * When a suitable Host is found, the method returns immediately. */
-        final int maxTries = hostList.size();
-        for (int i = 0; i < maxTries; i++) {
-            final Host host = hostList.get(lastHostIndex);
-            if (host.isSuitableForVm(vm)) {
-                return Optional.of(host);
-            }
-
-            /* If it gets here, the previous Host doesn't have capacity to place the VM.
-             * Then, moves to the next Host.
-             * If the end of the Host list is reached, starts from the beginning,
-             * until the max number of tries.*/
-            lastHostIndex = ++lastHostIndex % hostList.size();
+        List<Host> hostList = (List<Host>)getHostList();
+        Host currentHost,minHost = hostList.get(0);
+        long vmGroupId = vm.getGroupId();
+        List<Long> idList = savedAllocation.get(vmGroupId);
+        System.out.println(idList);
+        List<Host> possibleHosts;
+        if(idList==null) {
+        	possibleHosts = hostList;
+        	System.out.println("Hi");
         }
-
-        return Optional.empty();
+        else {
+        	for(long id : idList) {
+            	System.out.println(id);
+            }
+        	System.out.println("Hi else");
+        	System.out.println(idList==NULL);
+        	System.out.println(idList.isEmpty());
+        	possibleHosts = getHostListExcluding(idList);
+        	
+        }
+        double totalPowerConsumed;
+        double minPower = Double.MAX_VALUE;
+        int randomChoice;
+        boolean flag = true;
+        for(int trial = 0;trial<maxIterations;trial++) {
+            randomChoice = randInt(0,possibleHosts.size());
+            for(int i=0;i<maxNeighborLookup;i++) {
+            	currentHost = possibleHosts.get((randomChoice+i)%possibleHosts.size());
+            	if(currentHost.isSuitableForVm(vm)) {
+            		totalPowerConsumed = getTotalPowerDatacenter(currentHost,vm);
+            		if(totalPowerConsumed<minPower) {
+            			minPower = totalPowerConsumed;
+            			minHost = currentHost;
+            			flag = false;
+            		}
+            	}
+            }
+        }
+        if(flag)
+        	return Optional.empty();
+        long correspondingHostId = getCorrespondingHostId(minHost);
+        if(idList == null) {
+        	List<Long> newList = new ArrayList<Long>();
+        	newList.add(correspondingHostId);
+        	savedAllocation.put(vmGroupId, newList);
+        }
+        else {
+        	savedAllocation.get(vmGroupId).add(correspondingHostId);
+        }
+        return Optional.of(minHost);
     }
 }
