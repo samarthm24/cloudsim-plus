@@ -55,8 +55,10 @@ public class VmAllocationPolicyGravity extends VmAllocationPolicyAbstract implem
     }
     
     private List<Host> getHostListExcluding(List<Long> idList){
+    	int flag=1;
     	List<Host> hostListDatacenter = (List<Host>) getHostList();
     	List<Host> hostList = new ArrayList<Host>();
+    	List<Host> resultList = new ArrayList<Host>();
     	for(Host host: hostListDatacenter) {
     		hostList.add(host);
     	}
@@ -72,11 +74,20 @@ public class VmAllocationPolicyGravity extends VmAllocationPolicyAbstract implem
     			}
     		}
     	}
-    	for(int k=0;k<indeces.size();k++) {
-    		int hostIndex = indeces.get(k);
-    		hostList.remove(hostIndex);
+    	for(int i=0;i<hostList.size();i++) {
+    		flag = 1;
+    		for(int k=0;k<indeces.size();k++) {
+        		int hostIndex = indeces.get(k);
+        		if(hostIndex == i) {
+        			flag = 0;
+        			break;
+        		}
+        	}
+    		if(flag==1)
+    			resultList.add(hostList.get(i));
     	}
-    	return hostList;
+    	
+    	return resultList;
     }
     
     private double getTotalPowerDatacenter(Host currentHost,Vm vm) {
